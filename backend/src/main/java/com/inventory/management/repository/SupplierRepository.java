@@ -17,4 +17,6 @@ public interface SupplierRepository extends JpaRepository<Supplier, Long> {
     boolean existsByEmail(String email);
 
     List<Supplier> findByActiveTrue();
+
+    long countByActiveTrue();
 }

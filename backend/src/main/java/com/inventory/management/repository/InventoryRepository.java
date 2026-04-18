@@ -13,15 +13,15 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
     Optional<Inventory> findByProductId(Long productId);
 
-    @Query("SELECT i FROM Inventory i WHERE i.quantity <= i.product.reorderLevel")
+    @Query("SELECT i FROM Inventory i WHERE i.quantity <= i.product.reorderLevel AND i.product.active = true")
     List<Inventory> findLowStockItems();
 
     @Query("SELECT SUM(i.quantity * i.product.price) FROM Inventory i WHERE i.product.active = true")
     Double calculateTotalInventoryValue();
 
-    @Query("SELECT COUNT(i) FROM Inventory i WHERE i.quantity <= i.product.reorderLevel")
+    @Query("SELECT COUNT(i) FROM Inventory i WHERE i.quantity <= i.product.reorderLevel AND i.product.active = true")
     long countLowStockItems();
 
-    @Query("SELECT COUNT(i) FROM Inventory i WHERE i.quantity = 0")
+    @Query("SELECT COUNT(i) FROM Inventory i WHERE i.quantity = 0 AND i.product.active = true")
     long countOutOfStockItems();
 }
