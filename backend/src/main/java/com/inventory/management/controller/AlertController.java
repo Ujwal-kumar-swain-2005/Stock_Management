@@ -41,8 +41,6 @@ public class AlertController {
                     : "Low stock: " + inv.getProduct().getName() + " (" + inv.getQuantity() + " remaining)");
             return alert;
         }).collect(Collectors.toList());
-
-        // Expiry alerts (30 days)
         List<Product> expiringProducts = productService.getExpiringProducts(30);
         List<Map<String, Object>> expiryAlerts = expiringProducts.stream().map(p -> {
             Map<String, Object> alert = new LinkedHashMap<>();

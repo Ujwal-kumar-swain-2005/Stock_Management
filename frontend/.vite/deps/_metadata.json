@@ -1,0 +1,94 @@
+{
+  "hash": "9930ec03",
+  "configHash": "a77d46ef",
+  "lockfileHash": "2d6c67bd",
+  "browserHash": "ebaac2a4",
+  "optimized": {
+    "@mui/icons-material": {
+      "src": "../../node_modules/@mui/icons-material/index.mjs",
+      "file": "@mui_icons-material.js",
+      "fileHash": "b1858ad5",
+      "needsInterop": false
+    },
+    "@mui/material": {
+      "src": "../../node_modules/@mui/material/index.mjs",
+      "file": "@mui_material.js",
+      "fileHash": "04fe23b8",
+      "needsInterop": false
+    },
+    "@mui/material/styles": {
+      "src": "../../node_modules/@mui/material/styles/index.mjs",
+      "file": "@mui_material_styles.js",
+      "fileHash": "65f122ea",
+      "needsInterop": false
+    },
+    "axios": {
+      "src": "../../node_modules/axios/index.js",
+      "file": "axios.js",
+      "fileHash": "00e748a0",
+      "needsInterop": false
+    },
+    "notistack": {
+      "src": "../../node_modules/notistack/notistack.esm.js",
+      "file": "notistack.js",
+      "fileHash": "a825d9b2",
+      "needsInterop": false
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "5abf9806",
+      "needsInterop": true
+    },
+    "react-router-dom": {
+      "src": "../../node_modules/react-router-dom/dist/index.mjs",
+      "file": "react-router-dom.js",
+      "fileHash": "331b58d3",
+      "needsInterop": false
+    },
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "86238da1",
+      "needsInterop": true
+    },
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "93a15235",
+      "needsInterop": true
+    },
+    "recharts": {
+      "src": "../../node_modules/recharts/es6/index.js",
+      "file": "recharts.js",
+      "fileHash": "e677790a",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-BoAXSpZd": {
+      "file": "chunk-BoAXSpZd.js",
+      "isDynamicEntry": false
+    },
+    "createSvgIcon-CN-n-K3T": {
+      "file": "createSvgIcon-CN-n-K3T.js",
+      "isDynamicEntry": false
+    },
+    "react-dom-CSiT-6vy": {
+      "file": "react-dom-CSiT-6vy.js",
+      "isDynamicEntry": false
+    },
+    "react-is-ChCU2Ko3": {
+      "file": "react-is-ChCU2Ko3.js",
+      "isDynamicEntry": false
+    },
+    "styled-CGBiJgNb": {
+      "file": "styled-CGBiJgNb.js",
+      "isDynamicEntry": false
+    },
+    "styles-9edrJiF1": {
+      "file": "styles-9edrJiF1.js",
+      "isDynamicEntry": false
+    }
+  }
+}
