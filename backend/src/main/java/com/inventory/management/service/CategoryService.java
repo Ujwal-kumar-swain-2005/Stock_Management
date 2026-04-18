@@ -3,8 +3,11 @@ package com.inventory.management.service;
 import com.inventory.management.entity.Category;
 import com.inventory.management.exception.BadRequestException;
 import com.inventory.management.exception.ResourceNotFoundException;
+import com.inventory.management.entity.Product;
 import com.inventory.management.repository.CategoryRepository;
+import com.inventory.management.repository.ProductRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -12,9 +15,11 @@ import java.util.List;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
 
-    public CategoryService(CategoryRepository categoryRepository) {
+    public CategoryService(CategoryRepository categoryRepository, ProductRepository productRepository) {
         this.categoryRepository = categoryRepository;
+        this.productRepository = productRepository;
     }
 
     public List<Category> getAllCategories() {
@@ -45,9 +50,16 @@ public class CategoryService {
         return categoryRepository.save(category);
     }
 
+    @Transactional
     public void deleteCategory(Long id) {
         Category category = getCategoryById(id);
         category.setActive(false);
         categoryRepository.save(category);
+
+        List<Product> products = productRepository.findByCategoryId(id);
+        for (Product product : products) {
+            product.setActive(false);
+            productRepository.save(product);
+        }
     }
 }

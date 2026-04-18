@@ -36,9 +36,9 @@ public class DashboardService {
     public DashboardStats getDashboardStats() {
         DashboardStats stats = new DashboardStats();
 
-        stats.setTotalProducts(productRepository.count());
-        stats.setTotalCategories(categoryRepository.count());
-        stats.setTotalSuppliers(supplierRepository.count());
+        stats.setTotalProducts(productRepository.countByActiveTrue());
+        stats.setTotalCategories(categoryRepository.countByActiveTrue());
+        stats.setTotalSuppliers(supplierRepository.countByActiveTrue());
         stats.setTotalOrders(orderRepository.count());
         stats.setLowStockItems(inventoryRepository.countLowStockItems());
         stats.setOutOfStockItems(inventoryRepository.countOutOfStockItems());
