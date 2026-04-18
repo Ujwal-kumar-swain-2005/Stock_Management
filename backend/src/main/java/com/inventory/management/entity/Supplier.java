@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "suppliers")
 public class Supplier {
@@ -37,10 +39,10 @@ public class Supplier {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "supplier", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Product> products = new ArrayList<>();
-
-    // Constructors
+   @JsonIgnore
+    @OneToMany(mappedBy = "supplier")
+    private List<Product> products;
+  
     public Supplier() {
     }
 
