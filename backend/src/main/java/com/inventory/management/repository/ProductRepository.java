@@ -1,6 +1,7 @@
 package com.inventory.management.repository;
 
 import com.inventory.management.entity.Product;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +18,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     boolean existsBySku(String sku);
 
+    @EntityGraph(attributePaths = {"category", "supplier"})
+    List<Product> findAll();
+
+    @EntityGraph(attributePaths = {"category", "supplier"})
+    Optional<Product> findById(Long id);
+
+    @EntityGraph(attributePaths = {"category", "supplier"})
     List<Product> findByActiveTrue();
 
     long countByActiveTrue();

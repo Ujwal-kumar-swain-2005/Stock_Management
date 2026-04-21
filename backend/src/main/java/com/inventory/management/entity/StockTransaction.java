@@ -2,17 +2,19 @@ package com.inventory.management.entity;
 
 import com.inventory.management.enums.TransactionType;
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "stock_transactions")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class StockTransaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
@@ -29,7 +31,7 @@ public class StockTransaction {
     @Column(length = 500)
     private String notes;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "performed_by")
     private User performedBy;
 
