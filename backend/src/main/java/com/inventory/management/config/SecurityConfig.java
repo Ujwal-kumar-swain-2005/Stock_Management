@@ -77,6 +77,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/suppliers/**").hasAnyRole("ADMIN", "MANAGER")
                         // Reports - Admin and Manager only
                         .requestMatchers("/api/reports/**").hasAnyRole("ADMIN", "MANAGER")
+                        // Inventory manual adjustments - Admin and Manager only
+                        .requestMatchers(HttpMethod.POST, "/api/inventory/**").hasAnyRole("ADMIN", "MANAGER")
+                        .requestMatchers(HttpMethod.PUT, "/api/inventory/**").hasAnyRole("ADMIN", "MANAGER")
                         // All authenticated users
                         .anyRequest().authenticated()
                 );

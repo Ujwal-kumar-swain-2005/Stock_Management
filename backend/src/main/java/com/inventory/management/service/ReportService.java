@@ -85,7 +85,7 @@ public class ReportService {
     public Map<String, Object> getInventoryReport() {
         Map<String, Object> report = new LinkedHashMap<>();
 
-        List<Inventory> allInventory = inventoryRepository.findAll();
+        List<Inventory> allInventory = inventoryRepository.findByProductActiveTrue();
         Double totalValue = inventoryRepository.calculateTotalInventoryValue();
 
         report.put("totalProducts", allInventory.size());

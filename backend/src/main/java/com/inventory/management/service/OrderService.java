@@ -73,6 +73,9 @@ public class OrderService {
         }
 
         for (OrderRequest.OrderItemRequest itemReq : request.getItems()) {
+            if (itemReq.getQuantity() <= 0) {
+                throw new BadRequestException("Order item quantity must be greater than zero");
+            }
             Product product = productRepository.findById(itemReq.getProductId())
                     .orElseThrow(() -> new ResourceNotFoundException("Product", "id", itemReq.getProductId()));
 

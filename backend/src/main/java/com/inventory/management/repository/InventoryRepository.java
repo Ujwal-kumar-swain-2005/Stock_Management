@@ -13,6 +13,8 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
     Optional<Inventory> findByProductId(Long productId);
 
+    List<Inventory> findByProductActiveTrue();
+
     @Query("SELECT i FROM Inventory i WHERE i.quantity <= i.product.reorderLevel AND i.product.active = true")
     List<Inventory> findLowStockItems();
 

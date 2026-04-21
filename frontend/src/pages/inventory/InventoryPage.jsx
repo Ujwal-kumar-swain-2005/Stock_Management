@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSnackbar } from 'notistack';
+import { useAuth } from '../../context/AuthContext';
 import { getAllInventory, getAllTransactions, stockIn, stockOut } from '../../api/inventoryApi';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { formatDateTime } from '../../utils/formatters';
@@ -13,6 +14,8 @@ import { Add, Remove } from '@mui/icons-material';
 
 const InventoryPage = () => {
   const { enqueueSnackbar } = useSnackbar();
+  const { user } = useAuth();
+  const canEdit = user?.role === 'ADMIN' || user?.role === 'MANAGER';
   const [tab, setTab] = useState(0);
   const [inventory, setInventory] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -95,7 +98,7 @@ const InventoryPage = () => {
                   <TableCell sx={{ fontWeight: 700 }}>Reorder Level</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Last Updated</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="right">Actions</TableCell>
+                  {canEdit && <TableCell sx={{ fontWeight: 700 }} align="right">Actions</TableCell>}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -115,29 +118,31 @@ const InventoryPage = () => {
                       <TableCell>{item.product?.reorderLevel}</TableCell>
                       <TableCell><Chip label={status.label} size="small" color={status.color} /></TableCell>
                       <TableCell>{formatDateTime(item.lastUpdated)}</TableCell>
-                      <TableCell align="right">
-                        <IconButton
-                          size="small"
-                          color="success"
-                          onClick={() => openAdjust('IN', item.product?.id, item.product?.name)}
-                          title="Stock In"
-                        >
-                          <Add fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => openAdjust('OUT', item.product?.id, item.product?.name)}
-                          title="Stock Out"
-                        >
-                          <Remove fontSize="small" />
-                        </IconButton>
-                      </TableCell>
+                      {canEdit && (
+                        <TableCell align="right">
+                          <IconButton
+                            size="small"
+                            color="success"
+                            onClick={() => openAdjust('IN', item.product?.id, item.product?.name)}
+                            title="Stock In"
+                          >
+                            <Add fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => openAdjust('OUT', item.product?.id, item.product?.name)}
+                            title="Stock Out"
+                          >
+                            <Remove fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      )}
                     </TableRow>
                   );
                 })}
                 {inventory.length === 0 && (
-                  <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary' }}>No inventory data</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={canEdit ? 7 : 6} align="center" sx={{ py: 6, color: 'text.secondary' }}>No inventory data</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
