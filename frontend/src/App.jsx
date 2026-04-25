@@ -38,63 +38,75 @@ function LoadingFallback() {
   );
 }
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
-        <Router>
-          <AuthProvider>
-            <Suspense fallback={<LoadingFallback />}>
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
+          <Router>
+            <AuthProvider>
+              <Suspense fallback={<LoadingFallback />}>
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
 
-                {/* Protected Routes */}
-                <Route
-                  path="/"
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route index element={<Navigate to="/dashboard" replace />} />
-                  <Route path="dashboard" element={<DashboardPage />} />
-                  <Route path="products" element={<ProductListPage />} />
-                  <Route path="products/:id" element={<ProductDetailPage />} />
-                  <Route path="categories" element={<CategoryListPage />} />
-                  <Route path="suppliers" element={<SupplierListPage />} />
-                  <Route path="inventory" element={<InventoryPage />} />
-                  <Route path="orders" element={<OrderListPage />} />
-                  <Route path="orders/:id" element={<OrderDetailPage />} />
+                  {/* Protected Routes */}
                   <Route
-                    path="reports"
+                    path="/"
                     element={
-                      <ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}>
-                        <ReportsPage />
+                      <ProtectedRoute>
+                        <MainLayout />
                       </ProtectedRoute>
                     }
-                  />
-                  <Route
-                    path="users"
-                    element={
-                      <ProtectedRoute allowedRoles={['ADMIN']}>
-                        <UsersPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="alerts" element={<AlertsPage />} />
-                </Route>
+                  >
+                    <Route index element={<Navigate to="/dashboard" replace />} />
+                    <Route path="dashboard" element={<DashboardPage />} />
+                    <Route path="products" element={<ProductListPage />} />
+                    <Route path="products/:id" element={<ProductDetailPage />} />
+                    <Route path="categories" element={<CategoryListPage />} />
+                    <Route path="suppliers" element={<SupplierListPage />} />
+                    <Route path="inventory" element={<InventoryPage />} />
+                    <Route path="orders" element={<OrderListPage />} />
+                    <Route path="orders/:id" element={<OrderDetailPage />} />
+                    <Route
+                      path="reports"
+                      element={
+                        <ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}>
+                          <ReportsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="users"
+                      element={
+                        <ProtectedRoute allowedRoles={['ADMIN']}>
+                          <UsersPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route path="alerts" element={<AlertsPage />} />
+                  </Route>
 
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-              </Routes>
-            </Suspense>
-          </AuthProvider>
-        </Router>
-      </SnackbarProvider>
-    </ThemeProvider>
+                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
+              </Suspense>
+            </AuthProvider>
+          </Router>
+        </SnackbarProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 

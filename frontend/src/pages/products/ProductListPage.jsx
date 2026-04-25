@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { useAuth } from '../../context/AuthContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { canCreate, canDelete } from '../../utils/roles';
 import { formatCurrency } from '../../utils/formatters';
 import { getActiveProducts, deleteProduct, searchProducts } from '../../api/productApi';
@@ -21,77 +22,87 @@ const ProductListPage = () => {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useAuth();
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  
   const [searchKeyword, setSearchKeyword] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null, name: '' });
+  const [isSearching, setIsSearching] = useState(false);
 
- const fetchProducts = async () => {
-  try {
-    const res = await getActiveProducts();
-    console.log("FULL RESPONSE:", res);
-    console.log("DATA:", res.data);
-    console.log("IS ARRAY:", Array.isArray(res.data));
+  // 1. Fetch Products
+  const { data: productsData, isLoading: productsLoading } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const res = await getActiveProducts();
+      return Array.isArray(res.data) ? res.data : [];
+    },
+    enabled: !isSearching,
+  });
 
-    setProducts(Array.isArray(res.data) ? res.data : []);
-  } catch (err) {
-    console.log("ERROR:", err);
-  } finally {
-    setLoading(false);
-  }
-};
-
-  const fetchCategories = async () => {
-    try {
+  // 2. Fetch Categories
+  const { data: categoriesData = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
       const res = await getAllCategories();
-      setCategories(res.data);
-    } catch { /* ignore */ }
-  };
+      return res.data;
+    }
+  });
 
-  useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-  }, []);
+  // 3. Search Products Query (Manual trigger)
+  const { data: searchResults, refetch: executeSearch, isFetching: searchLoading } = useQuery({
+    queryKey: ['products', 'search', searchKeyword],
+    queryFn: async () => {
+      const res = await searchProducts(searchKeyword);
+      return res.data;
+    },
+    enabled: false,
+  });
+
+  // 4. Delete Mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id) => deleteProduct(id),
+    onSuccess: () => {
+      enqueueSnackbar('Product deleted', { variant: 'success' });
+      setDeleteDialog({ open: false, id: null, name: '' });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+    onError: () => {
+      enqueueSnackbar('Failed to delete product', { variant: 'error' });
+    }
+  });
 
   const handleSearch = async () => {
     if (!searchKeyword.trim()) {
-      fetchProducts();
+      setIsSearching(false);
       return;
     }
+    setIsSearching(true);
     try {
-      const res = await searchProducts(searchKeyword);
-      setProducts(res.data);
+      await executeSearch();
     } catch {
       enqueueSnackbar('Search failed', { variant: 'error' });
     }
   };
 
-  const handleDelete = async () => {
-    try {
-      await deleteProduct(deleteDialog.id);
-      enqueueSnackbar('Product deleted', { variant: 'success' });
-      setDeleteDialog({ open: false, id: null, name: '' });
-      fetchProducts();
-    } catch {
-      enqueueSnackbar('Failed to delete product', { variant: 'error' });
-    }
+  const handleDelete = () => {
+    deleteMutation.mutate(deleteDialog.id);
   };
 
   const handleFormClose = (refresh) => {
     setFormOpen(false);
     setEditProduct(null);
-    if (refresh) fetchProducts();
+    if (refresh) queryClient.invalidateQueries({ queryKey: ['products'] });
   };
 
-  const filteredProducts = categoryFilter
-    ? products.filter((p) => p.category?.id === Number(categoryFilter))
-    : products;
+  const activeProducts = isSearching && searchResults ? searchResults : (productsData || []);
 
-  if (loading) return <LoadingSpinner message="Loading products..." />;
+  const filteredProducts = categoryFilter
+    ? activeProducts.filter((p) => p.category?.id === Number(categoryFilter))
+    : activeProducts;
+
+  if (productsLoading || searchLoading) return <LoadingSpinner message="Loading products..." />;
 
   return (
     <Box>
@@ -121,7 +132,7 @@ const ProductListPage = () => {
             sx={{ width: 160 }}
           >
             <MenuItem value="">All</MenuItem>
-            {categories.map((c) => (
+            {categoriesData.map((c) => (
               <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
             ))}
           </TextField>
@@ -219,7 +230,7 @@ const ProductListPage = () => {
           <ProductForm
             product={editProduct}
             onClose={handleFormClose}
-            categories={categories}
+            categories={categoriesData}
           />
         </DialogContent>
       </Dialog>
