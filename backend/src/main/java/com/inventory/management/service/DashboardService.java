@@ -75,9 +75,9 @@ public class DashboardService {
         List<Map<String, Object>> lowStockList = lowStock.stream().limit(10).map(i -> {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("id", i.getProduct().getId());
-            map.put("productName", i.getProduct().getName());
+            map.put("name", i.getProduct().getName());
             map.put("sku", i.getProduct().getSku());
-            map.put("currentStock", i.getQuantity());
+            map.put("quantity", i.getQuantity());
             map.put("reorderLevel", i.getProduct().getReorderLevel());
             return map;
         }).collect(Collectors.toList());
@@ -94,7 +94,7 @@ public class DashboardService {
 
             Map<String, Object> monthData = new LinkedHashMap<>();
             monthData.put("month", monthStart.getMonth().toString().substring(0, 3));
-            monthData.put("sales", monthSales != null ? monthSales : 0.0);
+            monthData.put("amount", monthSales != null ? monthSales : 0.0);
             monthData.put("purchases", monthPurchases != null ? monthPurchases : 0.0);
             monthlySales.add(monthData);
         }

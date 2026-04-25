@@ -154,6 +154,22 @@ const ReportsPage = () => {
               <Grid size={{ xs: 12, md: 4 }}>
                 <Card><CardContent><Typography variant="body2" color="text.secondary">Avg Order Value</Typography><Typography variant="h4" sx={{ fontWeight: 800, color: '#5c6bc0' }}>{formatCurrency(purchaseData.averageOrderValue || 0)}</Typography></CardContent></Card>
               </Grid>
+              {purchaseData.ordersByDate && (
+                <Grid size={{ xs: 12 }}>
+                  <Card sx={{ height: 350 }}><CardContent sx={{ height: '100%' }}>
+                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>Purchases Over Time</Typography>
+                    <ResponsiveContainer width="100%" height="85%">
+                      <BarChart data={purchaseData.ordersByDate}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                        <XAxis dataKey="date" stroke="#b0bec5" fontSize={11} />
+                        <YAxis stroke="#b0bec5" fontSize={11} />
+                        <Tooltip contentStyle={{ backgroundColor: '#132f4c', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }} />
+                        <Bar dataKey="amount" fill="#ffa726" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent></Card>
+                </Grid>
+              )}
             </Grid>
           )}
         </Box>

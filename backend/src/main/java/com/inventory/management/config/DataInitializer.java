@@ -36,7 +36,6 @@ public class DataInitializer {
 
             if (performReset) {
                 System.out.println("Beginning Large-Scale Data Factory Wipe & Seed...");
-                // Note: Delete sequence matters to respect generic foreign key cascades
                 stockTransactionRepository.deleteAll();
                 orderRepository.deleteAll();
                 inventoryRepository.deleteAll();
@@ -78,7 +77,6 @@ public class DataInitializer {
             if (productRepository.count() == 0) {
                 User adminUser = userRepository.findByUsername("admin").get();
 
-                // 1. Generate 11 Categories
                 String[] catNames = {"Electronics", "Office Supplies", "Furniture", "Networking", "Software", 
                                      "Peripherals", "Cables", "Storage", "Components", "Accessories", "Safety Gear"};
                 List<Category> categories = new ArrayList<>();
@@ -89,7 +87,6 @@ public class DataInitializer {
                     categories.add(categoryRepository.save(c));
                 }
 
-                // 2. Generate 7 Suppliers
                 String[] supNames = {"Global Tech Distro", "Local Woodworks", "Office Max Supplier", 
                                      "CableCo Connect", "Storage Systems Inc", "SafeTech Partners", "Electro World"};
                 List<Supplier> suppliers = new ArrayList<>();
@@ -103,7 +100,6 @@ public class DataInitializer {
                     suppliers.add(supplierRepository.save(s));
                 }
 
-                // 3. Generate 25 Products
                 String[] prodNames = {
                     "ThinkPad T14", "LaserJet Toner", "Standing Desk", "Wireless Mouse", "Ethernet Cable 10m",
                     "Office Chair", "Monitor 24inch", "External HDD 1TB", "Mechanical Keyboard", "USB-C Hub",
@@ -122,24 +118,22 @@ public class DataInitializer {
                     p.setSupplier(suppliers.get(i % suppliers.size()));
                     double basePrice = 15.0 + (Math.random() * 400.0);
                     p.setCostPrice(BigDecimal.valueOf(basePrice).setScale(2, java.math.RoundingMode.HALF_UP));
-                    p.setPrice(BigDecimal.valueOf(basePrice * 1.5).setScale(2, java.math.RoundingMode.HALF_UP)); // 50% markup
+                    p.setPrice(BigDecimal.valueOf(basePrice * 1.5).setScale(2, java.math.RoundingMode.HALF_UP));
                     p.setReorderLevel((int)(Math.random() * 20 + 5));
                     
-                    // Assign Expiry Date to a subset of fast-moving goods
-                    if (catNames[i % categories.size()].equals("Office Supplies")) {
-                        p.setExpiryDate(LocalDate.now().plusDays((long)(Math.random() * 120 + 10)));
+                    // Assign Expiry Date to force some to expire soon
+                    if (i % 4 == 0) { // Every 4th product has an expiry
+                        int daysUntilExpiry = (i % 8 == 0) ? -2 : (int)(Math.random() * 25 + 3); // some expired (-2), some soon (3-28)
+                        p.setExpiryDate(LocalDate.now().plusDays(daysUntilExpiry));
                     }
                     products.add(productRepository.save(p));
                 }
 
                 System.out.println("Entities Saved. Orchestrating complex orders for 6 months of historical data...");
 
-                // 4. Generate historical data spanning past 180 days
-                // We progress day by day, creating orders and ensuring dates are set correctly.
                 for (int days = 180; days >= 0; days -= 3) {
                     LocalDateTime orderDateTime = LocalDateTime.now().minusDays(days);
                     
-                    // Create a PURCHASE Order (Restock) everyday every 3 days
                     OrderRequest poReq = new OrderRequest();
                     poReq.setOrderType("PURCHASE");
                     poReq.setNotes("Automated Bulk Restock - " + days + " days ago");
@@ -149,7 +143,7 @@ public class DataInitializer {
                         Product randomProd = products.get((int)(Math.random() * products.size()));
                         OrderRequest.OrderItemRequest item = new OrderRequest.OrderItemRequest();
                         item.setProductId(randomProd.getId());
-                        item.setQuantity((int)(Math.random() * 40 + 20)); // Buy 20-60 items
+                        item.setQuantity((int)(Math.random() * 40 + 20));
                         item.setUnitPrice(randomProd.getCostPrice());
                         poItems.add(item);
                     }
@@ -161,7 +155,6 @@ public class DataInitializer {
                     pastPoEntity.setOrderDate(orderDateTime);
                     orderRepository.save(pastPoEntity);
 
-                    // Create 1-2 SALES Orders to randomly decrease stock
                     int numSales = (int)(Math.random() * 2) + 1;
                     for (int s = 0; s < numSales; s++) {
                         try {
@@ -175,7 +168,7 @@ public class DataInitializer {
                                 Product randomProd = products.get((int)(Math.random() * products.size()));
                                 OrderRequest.OrderItemRequest item = new OrderRequest.OrderItemRequest();
                                 item.setProductId(randomProd.getId());
-                                item.setQuantity((int)(Math.random() * 5 + 1)); // Sell 1-5 items
+                                item.setQuantity((int)(Math.random() * 5 + 1));
                                 item.setUnitPrice(randomProd.getPrice());
                                 soItems.add(item);
                             }
@@ -187,12 +180,10 @@ public class DataInitializer {
                             pastSoEntity.setOrderDate(orderDateTime);
                             orderRepository.save(pastSoEntity);
                         } catch (Exception e) {
-                            // If insufficient stock or identical product constraint occurs, just ignore and continue
                         }
                     }
                 }
 
-                // 5. Backdate all StockTransactions to match their parent orders
                 List<com.inventory.management.entity.StockTransaction> txs = stockTransactionRepository.findAll();
                 List<Order> allOrders = orderRepository.findAll();
                 Map<String, LocalDateTime> orderDates = new HashMap<>();

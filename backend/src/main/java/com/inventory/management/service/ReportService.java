@@ -1,6 +1,7 @@
 package com.inventory.management.service;
 
 import com.inventory.management.entity.Inventory;
+import com.inventory.management.entity.Order;
 import com.inventory.management.entity.Product;
 import com.inventory.management.entity.StockTransaction;
 import com.inventory.management.enums.OrderType;
@@ -8,6 +9,7 @@ import com.inventory.management.enums.TransactionType;
 import com.inventory.management.repository.*;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -38,31 +40,34 @@ public class ReportService {
         Double totalSales = orderRepository.sumTotalByTypeAndDateRange(OrderType.SALES, start, end);
         long totalOrders = orderRepository.countByTypeAndDateRange(OrderType.SALES, start, end);
 
-        report.put("totalSales", totalSales != null ? totalSales : 0.0);
+        report.put("totalAmount", totalSales != null ? totalSales : 0.0);
         report.put("totalOrders", totalOrders);
+        report.put("averageOrderValue", totalOrders > 0 ? (totalSales != null ? totalSales : 0.0) / totalOrders : 0.0);
         report.put("startDate", startDate.toString());
         report.put("endDate", endDate.toString());
 
-        List<StockTransaction> transactions = transactionRepository
-                .findByTypeAndDateRange(TransactionType.OUT, start, end);
+        // Generate ordersByDate for the BarChart
+        List<Order> salesOrders = orderRepository.findAll().stream()
+                .filter(o -> o.getOrderType() == OrderType.SALES && 
+                             !o.getOrderDate().isBefore(start) && 
+                             !o.getOrderDate().isAfter(end))
+                .collect(Collectors.toList());
 
-        Map<String, Integer> productSales = new LinkedHashMap<>();
-        for (StockTransaction t : transactions) {
-            String name = t.getProduct().getName();
-            productSales.put(name, productSales.getOrDefault(name, 0) + t.getQuantity());
+        Map<String, Double> dailySales = new TreeMap<>();
+        for (Order o : salesOrders) {
+            String dateStr = o.getOrderDate().toLocalDate().toString();
+            dailySales.put(dateStr, dailySales.getOrDefault(dateStr, 0.0) + o.getTotalAmount().doubleValue());
         }
 
-        List<Map<String, Object>> topProducts = productSales.entrySet().stream()
-                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                .limit(10)
-                .map(e -> {
-                    Map<String, Object> map = new LinkedHashMap<>();
-                    map.put("product", e.getKey());
-                    map.put("quantitySold", e.getValue());
-                    return map;
-                }).collect(Collectors.toList());
+        List<Map<String, Object>> ordersByDate = dailySales.entrySet().stream().map(e -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("date", e.getKey());
+            map.put("amount", e.getValue());
+            return map;
+        }).collect(Collectors.toList());
 
-        report.put("topSellingProducts", topProducts);
+        report.put("ordersByDate", ordersByDate);
+
         return report;
     }
 
@@ -74,10 +79,33 @@ public class ReportService {
         Double totalPurchases = orderRepository.sumTotalByTypeAndDateRange(OrderType.PURCHASE, start, end);
         long totalOrders = orderRepository.countByTypeAndDateRange(OrderType.PURCHASE, start, end);
 
-        report.put("totalPurchases", totalPurchases != null ? totalPurchases : 0.0);
+        report.put("totalAmount", totalPurchases != null ? totalPurchases : 0.0);
         report.put("totalOrders", totalOrders);
+        report.put("averageOrderValue", totalOrders > 0 ? (totalPurchases != null ? totalPurchases : 0.0) / totalOrders : 0.0);
         report.put("startDate", startDate.toString());
         report.put("endDate", endDate.toString());
+
+        // Generate ordersByDate for the BarChart
+        List<Order> purchaseOrders = orderRepository.findAll().stream()
+                .filter(o -> o.getOrderType() == OrderType.PURCHASE && 
+                             !o.getOrderDate().isBefore(start) && 
+                             !o.getOrderDate().isAfter(end))
+                .collect(Collectors.toList());
+
+        Map<String, Double> dailyPurchases = new TreeMap<>();
+        for (Order o : purchaseOrders) {
+            String dateStr = o.getOrderDate().toLocalDate().toString();
+            dailyPurchases.put(dateStr, dailyPurchases.getOrDefault(dateStr, 0.0) + o.getTotalAmount().doubleValue());
+        }
+
+        List<Map<String, Object>> purchasesByDate = dailyPurchases.entrySet().stream().map(e -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("date", e.getKey());
+            map.put("amount", e.getValue());
+            return map;
+        }).collect(Collectors.toList());
+
+        report.put("ordersByDate", purchasesByDate);
 
         return report;
     }
@@ -88,10 +116,28 @@ public class ReportService {
         List<Inventory> allInventory = inventoryRepository.findByProductActiveTrue();
         Double totalValue = inventoryRepository.calculateTotalInventoryValue();
 
-        report.put("totalProducts", allInventory.size());
+        report.put("totalItems", allInventory.size());
         report.put("totalValue", totalValue != null ? totalValue : 0.0);
         report.put("lowStockCount", inventoryRepository.countLowStockItems());
         report.put("outOfStockCount", inventoryRepository.countOutOfStockItems());
+
+        // Generate categoryBreakdown for the PieChart
+        Map<String, Double> catBreakdown = new HashMap<>();
+        for (Inventory inv : allInventory) {
+            String catName = inv.getProduct().getCategory().getName();
+            double value = inv.getQuantity() * inv.getProduct().getCostPrice().doubleValue();
+            catBreakdown.put(catName, catBreakdown.getOrDefault(catName, 0.0) + value);
+        }
+        
+        List<Map<String, Object>> categoryBreakdownList = catBreakdown.entrySet().stream()
+                .filter(e -> e.getValue() > 0)
+                .map(e -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("category", e.getKey());
+            map.put("value", e.getValue());
+            return map;
+        }).collect(Collectors.toList());
+        report.put("categoryBreakdown", categoryBreakdownList);
 
         List<Map<String, Object>> stockDetails = allInventory.stream().map(inv -> {
             Map<String, Object> map = new LinkedHashMap<>();
@@ -100,13 +146,14 @@ public class ReportService {
             map.put("sku", inv.getProduct().getSku());
             map.put("quantity", inv.getQuantity());
             map.put("reorderLevel", inv.getProduct().getReorderLevel());
+            map.put("value", inv.getQuantity() * inv.getProduct().getCostPrice().doubleValue());
             map.put("price", inv.getProduct().getPrice());
             map.put("status", inv.getQuantity() == 0 ? "OUT_OF_STOCK"
                     : inv.getQuantity() <= inv.getProduct().getReorderLevel() ? "LOW_STOCK" : "IN_STOCK");
             return map;
         }).collect(Collectors.toList());
 
-        report.put("stockDetails", stockDetails);
+        report.put("items", stockDetails);
         return report;
     }
 
